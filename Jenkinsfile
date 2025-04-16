@@ -1,7 +1,7 @@
 pipeline {
     agent any
     
-    stages {
+    stages{
         stage("Stage 1: Build"){
             steps{
                 echo "Compiling and packaging the code (e.g. using Maven)... "
@@ -21,6 +21,28 @@ pipeline {
         stage("Stage 4: Security Scan"){
             steps{
                 echo "Scanning the code for vulnerabilities (e.g. with OWASP ZAP)..."
+                // Capture output in a file
+                sh 'echo "Security scan details..." > security.log'
+                // Archive the artifact so Jenkins can access it later
+                archiveArtifacts artifacts: 'security.log'
+            }
+            post{
+                success{
+                    emailext(
+                        to: "ollie.parks321@gmail.com",
+                        subject: "Security Scan Success"
+                        body: "Security scan complete successfully, check attached log for details."
+                        attachmentsPattern: 'security.log'
+                    )
+                }
+                failure{
+                    emailext(
+                        to: "ollie.parks321@gmail.com",
+                        subject: "Security Scan Failure"
+                        body: "Security scan failed, check attached log for details."
+                        attachmentsPattern: 'security.log'
+                    )
+                }
             }
         }
         stage("Stage 5: Deploy to Staging"){
