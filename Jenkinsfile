@@ -12,19 +12,16 @@ pipeline {
             steps{
                 echo "Running tests (e.g. using JUnit)..."
             }
-            // Email with attachment for Unit and Integration Tests stage
+            // Writing the log for the test stage
             post{
                 always{
                     script{
-                        def testLog = currentBuild.rawBuild.getLog(1000).join("\n")
+                        def testLog = Jenkins.instance.getItemByFullName(env.JOB_NAME)
+                        .getBuildByNumber(env.BUILD_NUMBER.toInteger())
+                        .getLog(1000)
+                        .join("\n")
                         writeFile file: "console-test.log", text: testLog
                         archiveArtifacts artifacts: "console-test.log", allowEmptyArchive: true 
-                        emailext(
-                            to: "ollie.parks321@gmail.com",
-                            subject: "Unit and Integration Tests - ${currentBuild.currentResult}",
-                            body: "Unit and Integration Tests stage complete with status: ${currentBuild.currentResult}.",
-                            attachmentsPattern: "console-test.log"
-                        )
                     }
                 }
             }
@@ -38,19 +35,16 @@ pipeline {
             steps{
                 echo "Scanning the code for vulnerabilities (e.g. with OWASP ZAP)..."
             }
-            // Email with attachment for Security Scan stage
+            // Writing the log for the security scan stage
             post{
                 always{
                     script{
-                        def secLog = currentBuild.rawBuild.getLog(1000).join("\n")
+                        def secLog = Jenkins.instance.getItemByFullName(env.JOB_NAME)
+                        .getBuildByNumber(env.BUILD_NUMBER.toInteger())
+                        .getLog(1000)
+                        .join("\n")
                         writeFile file: "console-security.log", text: secLog
                         archiveArtifacts artifacts: "console-security.log", allowEmptyArchive: true 
-                        emailext(
-                            to: "ollie.parks321@gmail.com",
-                            subject: "Security Scan - ${currentBuild.currentResult}",
-                            body: "Security Scan stage complete with status: ${currentBuild.currentResult}.",
-                            attachmentsPattern: "console-security.log"
-                        )
                     }
                 }
             }
@@ -68,6 +62,20 @@ pipeline {
         stage("Stage 7: Deploy to Production"){
             steps{
                 echo "Deploying application to production environment (e.g. AWS EC2)..."
+            }
+        }
+    }
+    // Emailing the result and logs for test and security stage
+    post{
+        always{
+            script{
+                emailext(
+                    to: "ollie.parks321@gmail.com",
+                    subject: "Jenkins Pipeline - ${currentBuild.currentResult}",
+                    body: "The Jenkins Pipeline for task 8.1C is complete with status: ${currentBuild.currentResult}. \nAttached are the logs for the test and security stages.",
+                    attachmentsPattern: "console-*.log",
+                    attachLog: false
+                )
             }
         }
     }
