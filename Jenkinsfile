@@ -4,7 +4,8 @@ pipeline {
     stages {
         stage("Stage 1: Build"){
             steps{
-                echo "Compiling and packaging the code (e.g. using Maven)..."
+                echo "Compiling and packaging the code (e.g. using Maven)... "
+                echo "Test for automatic polling"
             }
         }
         stage("Stage 2: Unit and Integration Tests"){
