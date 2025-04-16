@@ -12,6 +12,22 @@ pipeline {
             steps{
                 echo "Running tests (e.g. using JUnit)..."
             }
+            // Email with attachment for Unit and Integration Tests stage
+            post{
+                always{
+                    script{
+                        def testLog = currentBuild.rawBuild.getLog(1000).join("\n")
+                        writeFile file: "console-test.log", text: testLog
+                        archiveArtifacts artifacts: "console-test.log", allowEmptyArchive: true 
+                        emailext(
+                            to: "ollie.parks321@gmail.com",
+                            subject: "Unit and Integration Tests - ${currentBuild.currentResult}",
+                            body: "Unit and Integration Tests stage complete with status: ${currentBuild.currentResult}.",
+                            attachmentsPattern: "console-test.log"
+                        )
+                    }
+                }
+            }
         }
         stage("Stage 3: Code Analysis"){
             steps{
@@ -21,27 +37,21 @@ pipeline {
         stage("Stage 4: Security Scan"){
             steps{
                 echo "Scanning the code for vulnerabilities (e.g. with OWASP ZAP)..."
-                // Capture output in a file
-                sh 'echo "Security scan details..." > security.log'
-                // Archive the artifact so Jenkins can access it later
-                archiveArtifacts artifacts: 'security.log'
             }
+            // Email with attachment for Security Scan stage
             post{
-                success{
-                    emailext(
-                        to: "ollie.parks321@gmail.com",
-                        subject: "Security Scan Success"
-                        body: "Security scan complete successfully, check attached log for details."
-                        attachmentsPattern: 'security.log'
-                    )
-                }
-                failure{
-                    emailext(
-                        to: "ollie.parks321@gmail.com",
-                        subject: "Security Scan Failure"
-                        body: "Security scan failed, check attached log for details."
-                        attachmentsPattern: 'security.log'
-                    )
+                always{
+                    script{
+                        def secLog = currentBuild.rawBuild.getLog(1000).join("\n")
+                        writeFile file: "console-security.log", text: secLog
+                        archiveArtifacts artifacts: "console-security.log", allowEmptyArchive: true 
+                        emailext(
+                            to: "ollie.parks321@gmail.com",
+                            subject: "Security Scan - ${currentBuild.currentResult}",
+                            body: "Security Scan stage complete with status: ${currentBuild.currentResult}.",
+                            attachmentsPattern: "console-security.log"
+                        )
+                    }
                 }
             }
         }
